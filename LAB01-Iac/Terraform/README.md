@@ -41,5 +41,7 @@ username@linux:~$ terraform apply
 
 ## NOTE
 The source using a profile "aws configure --profile={iam users}"
+
 AWS Provider Version 5.70.0
+
 Terraform Version >= 1.0
