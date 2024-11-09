@@ -3,7 +3,7 @@ name: 'Terraform'
 on:
   push:
     paths:
-      - 'LAB02-CICD/**'
+      - 'LAB02-CICD/GithubActions/**'
 
 permissions:
   contents: read
