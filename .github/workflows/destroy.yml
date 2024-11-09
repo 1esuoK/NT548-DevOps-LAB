@@ -29,9 +29,9 @@ jobs:
 
     - name: Terraform Init
       run: terraform init
-      working-directory: ./LAB02-CICD/live
+      working-directory: ./LAB02-CICD/GithubActions/live
 
     - name: Terraform Destroy
       if: github.event_name == 'workflow_dispatch' 
       run: terraform destroy -auto-approve -input=false
-      working-directory: ./LAB02-CICD/live
+      working-directory: ./LAB02-CICD/GithubActions/live
