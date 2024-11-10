@@ -46,6 +46,11 @@ jobs:
       run: terraform plan -input=false
       working-directory: LAB02-CICD/GithubActions/live
 
+    - name: Run Checkov for Security and Compliance Checks
+      uses: bridgecrewio/checkov-action@v12
+      with:
+        scan-path: LAB02-CICD/GithubActions
+
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: terraform apply -auto-approve -input=false
