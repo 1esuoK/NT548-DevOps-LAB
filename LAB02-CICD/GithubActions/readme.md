@@ -42,9 +42,9 @@ Use GitHub’s repository settings to securely store sensitive information in th
 
 # USAGE
 
-The [terraform.yml](.github/workflows/terraform.yml) workflow will trigger automatically if you make changes at LAB02-CICD/GithubActions/live/config.yaml
+The [terraform.yml](../../.github/workflows/terraform.yml) workflow will trigger automatically if you make changes at LAB02-CICD/GithubActions/live/config.yaml
 
-The [destroy.yml](.github/workflows/destroy.yml) workflow can trigger manually
+The [destroy.yml](../../.github/workflows/destroy.yml) workflow can trigger manually
 
 By clicking Run workflow
 
