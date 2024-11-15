@@ -1,0 +1,249 @@
+#========== Parameters ==========
+
+Parameters:
+  VpcCidr:
+    Type: String
+    Default: 10.0.0.0/16
+    Description: VPC CIDR block
+  
+  PublicSubnetCidr:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: Public Subnet CIDR block
+
+  PrivateSubnetCidr:
+    Type: String
+    Default: 10.0.2.0/24
+    Description: Private Subnet CIDR block
+  
+  NatGatewaySubnetCidr:
+    Type: String
+    Default: 10.0.1.0/24
+    Description: NAT Gateway CIDR block of NAT Gateway
+  
+  EnableDnsSupport:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: Enable DNS for VPC
+  
+  EnableDnsHostnames:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: Enable DNS Hostnames for VPC
+
+  LatestAmiId:
+    Description: "AMI for EC2"
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Name of EC2 KeyPair SSH Connection
+    ConstraintDescription: A valid KeyPair name is required.
+
+Resources:
+#========== VPC ==========
+  MyVPC:
+    Type: AWS::EC2::VPC
+    Properties: 
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: !Ref EnableDnsSupport
+      EnableDnsHostnames: !Ref EnableDnsHostnames
+      Tags:
+        - Key: Name
+          Value: MyVPC
+
+#========== INTERNET GATEWAY ==========
+  MyInternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+#========== ATTACH IG TO VPC ==========
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref MyInternetGateway
+
+#========== PUBLIC SUBNET ==========
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PublicSubnetCidr
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [ 0, !GetAZs "" ]
+      Tags:
+        - Key: Name
+          Value: PublicSubnet
+
+#========== PRIVATE SUBNET ==========
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: !Ref PrivateSubnetCidr
+      AvailabilityZone: !Select [ 1, !GetAZs "" ]
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet
+
+#========== PUBLIC ROUTETABLE ==========
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: PublicRouteTable
+    DependsOn: PublicSubnet
+
+#========== ROUTE IG TO PUBLIC ROUTETABLE ==========
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref MyInternetGateway
+
+#========== ASSOCIATION ROUTETABLE TO SUBNET (PUBLIC)==========
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+    DependsOn: [PublicRouteTable, PublicSubnet] 
+
+#========== ELASTIC IP FOR NATGATEWAY==========
+  NatEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: AttachGateway
+    Properties:
+      Domain: vpc
+
+#========== ATTACH EIP FOR NATGATEWAY ==========
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    DependsOn: AttachGateway
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      AllocationId: !GetAtt NatEIP.AllocationId
+
+#========== PRIVATE ROUTE TABLE ==========
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: PrivateRouteTable
+
+#========== ROUTE PRIVATE ROUTE TABLE TO NATGW ==========
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+    DependsOn: PrivateSubnet
+
+#========== ASSOCIATION ROUTETABLE TO SUBNET (PRIVATE) ==========
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable
+    DependsOn: [PrivateRouteTable, PrivateSubnet] 
+
+#========== DEFAULT SG FOR VPC
+  DefaultSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Default security group for MyVPC
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: DefaultSecurityGroup
+
+#========== SG FOR EC2 INSTANCE ==========
+  PublicSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH and HTTP access via port 22 IPv4 & port 80 IPv4
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - Description: 'Allow SSH IPv4 IN'
+          IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: '1.54.132.156/32'
+      Tags:
+        - Key: Name
+          Value: PublicSG
+
+  PrivateSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Allow access from Public EC2 instance to Private EC2 instance
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - Description: 'Allow SSH from Public EC2 instance'
+          IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          SourceSecurityGroupId: !Ref PublicSG
+      Tags:
+        - Key: Name
+          Value: PrivateSG
+
+  PublicInstance:
+    Type: 'AWS::EC2::Instance'
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT15M
+    Properties:
+      InstanceType: "t2.micro"
+      KeyName: !Ref KeyName
+      ImageId: !Ref "LatestAmiId"
+      Tags:
+        - Key: Name
+          Value: PublicEC2Instance
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          SubnetId: !Ref PublicSubnet
+          DeviceIndex: 0
+          GroupSet: 
+            - !Ref PublicSG
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          yum -y update
+          yum -y upgrade
+          yum install -y httpd
+          systemctl enable httpd
+          systemctl start httpd
+          echo "<html><head><title>Amazing test page</title></head><body><h1><center>Amazing Public Instance</center></h1></body></html>" > /var/www/html/index.html
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource PublicInstance --region ${AWS::Region}
+  
+  PrivateInstance:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      KeyName: !Ref KeyName
+      ImageId: !Ref "LatestAmiId"
+      Tags:
+        - Key: Name
+          Value: PrivateEC2Instance
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: false
+          SubnetId: !Ref PrivateSubnet
+          DeviceIndex: 0
+          GroupSet: 
+            - !Ref PrivateSG

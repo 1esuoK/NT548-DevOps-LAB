@@ -1,0 +1,19 @@
+project:
+  name: CloudFormationTest
+  regions:
+    - us-east-1
+
+tests:
+  cfn-test:
+    template: cfn-main.yml
+    parameters:
+      VpcCidr: 10.0.0.0/16
+      PublicSubnetCidr: 10.0.1.0/24
+      PrivateSubnetCidr: 10.0.2.0/24
+      NatGatewaySubnetCidr: 10.0.1.0/24
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      LatestAmiId: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+      KeyName: 'cfnkey'
+    regions:
+      - us-east-1
