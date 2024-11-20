@@ -16,11 +16,6 @@ Parameters:
     Default: 10.0.2.0/24
     Description: Private Subnet CIDR block
   
-  NatGatewaySubnetCidr:
-    Type: String
-    Default: 10.0.1.0/24
-    Description: NAT Gateway CIDR block of NAT Gateway
-  
   EnableDnsSupport:
     Type: String
     Default: 'true'
@@ -41,6 +36,7 @@ Parameters:
   KeyName:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Name of EC2 KeyPair SSH Connection
+    Default: "tf_key"
     ConstraintDescription: A valid KeyPair name is required.
 
 Resources:
@@ -113,7 +109,6 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnet
       RouteTableId: !Ref PublicRouteTable
-    DependsOn: [PublicRouteTable, PublicSubnet] 
 
 #========== ELASTIC IP FOR NATGATEWAY==========
   NatEIP:
@@ -154,7 +149,6 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnet
       RouteTableId: !Ref PrivateRouteTable
-    DependsOn: [PrivateRouteTable, PrivateSubnet] 
 
 #========== DEFAULT SG FOR VPC
   DefaultSecurityGroup:
