@@ -1,6 +1,6 @@
 resource "aws_security_group" "public_security_group" {
-    name = "public_sg_lab5"
-    description = "public_sg_lab5"
+    name = "public_sg_lab2"
+    description = "public_sg_lab2"
 
     ingress {
         from_port = 443
@@ -30,6 +30,13 @@ resource "aws_security_group" "public_security_group" {
         cidr_blocks = ["0.0.0.0/0"]
     }
 
+    ingress {
+        from_port = 9000
+        to_port = 9000
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
     egress {
         from_port   = 0
         to_port     = 0
@@ -39,8 +46,8 @@ resource "aws_security_group" "public_security_group" {
 }
 
 resource "aws_security_group" "private_security_group" {
-    name = "private_sg_lab5"
-    description = "private_sg_lab5"
+    name = "private_sg_lab2"
+    description = "private_sg_lab2"
 
     ingress {
         from_port       = 80

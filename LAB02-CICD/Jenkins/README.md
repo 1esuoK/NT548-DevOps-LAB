@@ -3,25 +3,25 @@
 ## Description
 This is a web application for an e-commerce store that sells games. It is built using the MERN stack and Microservices Architecture. It has a user interface for the customers to view the products and add them to their cart. The application is built using the Microservices Architecture, where each service is a separate Node.js application.
 
-## Installation
-
-Use the package manager [npm](https://www.npmjs.com/) to install dependencies.
-
-```bash
-npm install
-```
+## Before go to next step
+Please clone only Jenkins folder to another repository to run isolated pipeline, DO NOT clone this repository
 
 ## Usage
 
-1. Create a .env file in the root directory and add the following environment variables (replace all #### with your own values):
+### Init Jenkins Master-Slave server and SonarQube server by Terraform
+1. Go to terraform folder and run terraform command below:
 ```bash
-PORT=####
-MONGO_USERNAME=####
-MONGO_PASSWORD=####
-MONGO_CLUSTER=####
-MONGO_DBNAME=####
-ACCESS_TOKEN=####
+# At root Jenkins folder
+cd terraform/jenkins
+terraform init
+terraform plan
+terraform apply
+cd ../sonarqube/
+terraform init
+terraform plan
+terraform apply
 ```
+3 server will be created: Jenkins-Master, Jenkins-Slave, SonarQube
 2. Run the following command to start the application:
 ```bash
 npm run dev

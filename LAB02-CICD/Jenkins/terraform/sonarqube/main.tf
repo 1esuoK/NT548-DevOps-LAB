@@ -10,14 +10,14 @@ terraform {
 provider "aws" {
   region = var.region
 }
-resource "aws_key_pair" "lab5-keypair" {
-  key_name =  "lab5-keypair"
+resource "aws_key_pair" "lab2-keypair" {
+  key_name =  "lab2-keypair"
   public_key = file(var.keypair_path)
   
 }
 
 module "security" {
-  source = "./modules/security"
+  source = "../modules/security"
   region = var.region
   aws_profile = var.aws_profile
   
@@ -30,7 +30,7 @@ module "compute" {
   user_data = file(each.value.user_data_path)
   region = var.region
   image_id = var.image_id
-  key_name = aws_key_pair.lab5-keypair.key_name
+  key_name = aws_key_pair.lab2-keypair.key_name
   instance_type = var.instance_type
   ec2_security_group_ids = [module.security.public_security_group_id]
   instance_name = each.value.name
