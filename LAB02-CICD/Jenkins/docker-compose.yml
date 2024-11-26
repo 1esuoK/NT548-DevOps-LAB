@@ -1,0 +1,73 @@
+version: '3'
+services:
+  user_service:
+    container_name: user_service
+    image: ${URL_REGISTRY}/${ECR_REPO}:user_service
+    ports:
+      - "9001:9001"
+    restart: always
+    # env_file:
+    #   - .env
+    command: npm run start
+    environment:
+      - MONGO_USERNAME=${MONGO_USERNAME}
+      - MONGO_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_CLUSTER=${MONGO_CLUSTER}
+      - MONGO_DBNAME=${MONGO_DBNAME_USER}
+      - ACCESS_TOKEN=${ACCESS_TOKEN}
+    networks:
+      - app_network
+
+  cart_service:
+    container_name: cart_service
+    image: ${URL_REGISTRY}/${ECR_REPO}:cart_service
+    ports:
+      - "9003:9003"
+    restart: always
+    # env_file:
+    #   - .env
+    command: npm run start 
+    environment:
+      - MONGO_USERNAME=${MONGO_USERNAME}
+      - MONGO_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_CLUSTER=${MONGO_CLUSTER}
+      - MONGO_DBNAME=${MONGO_DBNAME_CART}
+      - ACCESS_TOKEN=${ACCESS_TOKEN}
+    networks:
+      - app_network
+
+  product_service:
+    container_name: product_service
+    image: ${URL_REGISTRY}/${ECR_REPO}:product_service
+    ports:
+      - "9000:9000"
+    restart: always
+    command: npm run start
+    # env_file:
+    #   - .env
+    environment:
+      - MONGO_USERNAME=${MONGO_USERNAME}
+      - MONGO_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_CLUSTER=${MONGO_CLUSTER}
+      - MONGO_DBNAME=${MONGO_DBNAME_PRODUCT}
+      - ACCESS_TOKEN=${ACCESS_TOKEN}
+    networks:
+      - app_network
+
+  front-end:
+    container_name: front-end
+    image: ${URL_REGISTRY}/${ECR_REPO}:frontend
+    ports:
+      - "5173:5173"
+    # env_file:
+    #   - .env
+    restart: always
+    command: npm run dev
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+
